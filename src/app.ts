@@ -1,5 +1,5 @@
+import cors from 'cors';
 import express, { Express, Request, Response } from 'express';
-
 import { config } from './config/config';
 import invalidJsonErrorHandler from './middleware/invalidJsonErrorHandler';
 import { logger } from './middleware/requestLogger';
@@ -9,6 +9,12 @@ import log from './utils/logger';
 
 const app: Express = express();
 
+app.use(
+  cors({
+    origin: 'http://localhost:5173', // or '*' in development
+    credentials: true,
+  })
+);
 app.use(express.json()); // parser to allows us accept json data like req.body
 app.use(logger); // log every request from the api.
 app.use(invalidJsonErrorHandler); // middleware to handle invalid json errors
