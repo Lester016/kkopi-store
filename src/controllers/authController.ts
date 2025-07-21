@@ -14,12 +14,15 @@ const authUser = async (
 ) => {
   const { email, password }: User = req.body; // or like this.
 
-  const user = await User.findOne({ email: email });
+  const user = await User.findOne(
+    { email: email, deletedAt: { $exists: false } },
+    'email firstName lastName role verified'
+  );
 
   if (user && (await user.matchPassword(password))) {
     // Create JWT here.
 
-    const { access, refresh } = await generateToken(user.id);
+    const { access, refresh } = await generateToken(user);
 
     // res.cookie("access", access, { maxAge: 24 * 60 * 60 * 1000 /*one day*/ }); optional if we don't want to send this as a response.data
     res.send({ access, refresh });
