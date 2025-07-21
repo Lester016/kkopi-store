@@ -15,7 +15,7 @@ const authUser = async (
   const { email, password }: User = req.body; // or like this.
 
   const user = await User.findOne(
-    { email: email, deletedAt: { $exists: false } },
+    { email: email, deletedAt: null },
     'email firstName lastName role verified'
   );
 
