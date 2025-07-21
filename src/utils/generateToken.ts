@@ -8,14 +8,30 @@ const generateToken = async (
   user: User
   //   options?: jwt.SignOptions | undefined
 ) => {
-  const access = jwt.sign({ user }, config.accessTokenPrivateKey, {
-    expiresIn: config.accessTokenExpire,
-    // algorithm: "RS256", must be assymetric with private key format.
-  });
-
-  const refresh = jwt.sign({ user }, config.refreshTokenPrivateKey, {
-    expiresIn: config.refreshTokenExpire,
-  });
+  const access = jwt.sign(
+    {
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        verified: user.verified,
+      },
+    },
+    config.accessTokenPrivateKey,
+    {
+      expiresIn: config.accessTokenExpire,
+      // algorithm: "RS256", must be assymetric with private key format.
+    }
+  );
+  const refresh = jwt.sign(
+    { user: { id: user.id } },
+    config.refreshTokenPrivateKey,
+    {
+      expiresIn: config.refreshTokenExpire,
+    }
+  );
 
   const userToken = await Token.findOne({ userId: user.id });
   // Remove if existing.
