@@ -88,11 +88,16 @@ const refreshToken = async (req: Request, res: Response) => {
       refresh,
       config.refreshTokenPrivateKey
     ) as JwtPayload;
-
+    console.log(decoded, refresh, config.refreshTokenPrivateKey);
+    const user = await User.findOne({ _id: decoded.user.id, deletedAt: null });
+    if (!user) {
+      console.log('User not found, Invalid Token');
+      return res.status(404).send({ error: 'Invalid Token' });
+    }
     // Generate new access token.
-    const { access } = await generateToken(decoded.id);
+    const newToken = await generateToken(user);
 
-    res.send({ access });
+    res.send({ access: newToken.access, refresh: newToken.refresh });
   } catch (error) {
     return res.status(400).send({ error: 'Invalid Token' });
   }
