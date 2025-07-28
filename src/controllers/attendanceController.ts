@@ -11,7 +11,7 @@ const checkIn = async (req: Request, res: Response) => {
   }
 
   const date = new Date().toISOString().split('T')[0];
-  const timeIn = new Date().toLocaleTimeString();
+  const timeIn = new Date().toISOString();
 
   console.log('Clock-in request:', { userId, date, timeIn });
 
@@ -39,7 +39,7 @@ const checkOut = async (req: Request, res: Response) => {
   }
 
   const date = new Date().toISOString().split('T')[0];
-  const timeOut = new Date().toLocaleTimeString();
+  const timeOut = new Date().toISOString();
   console.log('Check-out request:', { userId, date, timeOut });
 
   const attendance = await Attendance.findOne({ userId, date });
