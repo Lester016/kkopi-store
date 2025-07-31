@@ -31,14 +31,26 @@ const updateUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updatedData = req.body;
-    const user = await User.findByIdAndUpdate(id, updatedData, {
-      new: true,
-      runValidators: true,
-    });
+
+    const user = await User.findById(id);
 
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
     }
+
+    // Check if email is being updated and ensure uniqueness
+    if (updatedData.email && updatedData.email !== user.email) {
+      const emailInUse = await User.findOne({
+        email: updatedData.email,
+        _id: { $ne: id },
+      }).lean();
+      if (emailInUse) {
+        return res.status(400).json({ message: 'Email already in use' });
+      }
+    }
+
+    Object.assign(user, updatedData); // apply updates to user instance
+    await user.save(); // save with validation
 
     res.send({ message: 'User updated successfully', user });
   } catch (error) {
