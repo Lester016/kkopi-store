@@ -1,4 +1,6 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
+import Schedule from '../models/ScheduleModel';
 import User from '../models/UserModel';
 
 const getAllUsers = async (req: Request, res: Response) => {
@@ -83,8 +85,53 @@ const deleteUser = async (req: Request, res: Response) => {
   }
 };
 
+const updateSchedule = async (req: Request, res: Response) => {
+  try {
+    const employeeId = req.params.id as string;
+    const { schedule } = req.body;
+
+    if (!mongoose.isValidObjectId(employeeId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+
+    const user = await User.findById(employeeId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!Array.isArray(schedule)) {
+      return res.status(400).json({ error: 'Invalid payload' });
+    }
+
+    // Delete existing schedule entries for the employee
+    await Schedule.deleteMany({ userId: employeeId });
+
+    // Create new schedule entries
+    const newEntries = schedule.map((entry) => ({
+      userId: employeeId,
+      dayOfWeek: entry.day_of_week,
+      shiftStart: entry.start_time,
+      shiftEnd: entry.end_time,
+    }));
+
+    const inserted = await Schedule.insertMany(newEntries);
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Schedule set successfully',
+      data: {
+        userId: employeeId,
+        schedule: inserted,
+      },
+    });
+  } catch (err) {
+    console.error('Error setting schedule:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 // const verifyEmail = async (req: Request, res: Response) => {
 //   res.send({ message: `Email sent to , please verify.` });
 // };
 
-export { deleteUser, getAllUsers, getUser, updateUser };
+export { deleteUser, getAllUsers, getUser, updateSchedule, updateUser };
