@@ -32,3 +32,32 @@ export const UpdateUserSchema = Joi.object<User>({
   firstName: Joi.string().uppercase(),
   lastName: Joi.string(),
 }).min(1);
+
+export const UpdateScheduleSchema = Joi.object({
+  schedule: Joi.array()
+    .items(
+      Joi.object({
+        day_of_week: Joi.string()
+          .valid(
+            'Sunday',
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday'
+          )
+          .required(),
+
+        start_time: Joi.string()
+          .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/) // 'HH:mm'
+          .required(),
+
+        end_time: Joi.string()
+          .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)
+          .required(),
+      })
+    )
+    .min(1)
+    .required(),
+});
