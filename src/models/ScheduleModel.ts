@@ -2,9 +2,15 @@ import mongoose, { Document, Schema, model } from 'mongoose';
 
 export interface ISchedule extends Document {
   userId: object;
-  dayOfWeek: string; // 0 (Sunday) - 6 (Saturday)
-  shiftStart: string; // 'HH:mm' format
-  shiftEnd: string; // 'HH:mm' format
+  weeklySchedule: {
+    Monday?: { shiftStart?: string; shiftEnd?: string };
+    Tuesday?: { shiftStart?: string; shiftEnd?: string };
+    Wednesday?: { shiftStart?: string; shiftEnd?: string };
+    Thursday?: { shiftStart?: string; shiftEnd?: string };
+    Friday?: { shiftStart?: string; shiftEnd?: string };
+    Saturday?: { shiftStart?: string; shiftEnd?: string };
+    Sunday?: { shiftStart?: string; shiftEnd?: string };
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -15,22 +21,38 @@ const ScheduleSchema = new Schema<ISchedule>(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      unique: true, // enforce 1 schedule per user
     },
-    dayOfWeek: {
-      type: String,
-      required: true,
-      enum: [
-        'Sunday',
-        'Monday',
-        'Tuesday',
-        'Wednesday',
-        'Thursday',
-        'Friday',
-        'Saturday',
-      ],
+    weeklySchedule: {
+      Monday: {
+        shiftStart: { type: String, required: false },
+        shiftEnd: { type: String, required: false },
+      },
+      Tuesday: {
+        shiftStart: { type: String, required: false },
+        shiftEnd: { type: String, required: false },
+      },
+      Wednesday: {
+        shiftStart: { type: String, required: false },
+        shiftEnd: { type: String, required: false },
+      },
+      Thursday: {
+        shiftStart: { type: String, required: false },
+        shiftEnd: { type: String, required: false },
+      },
+      Friday: {
+        shiftStart: { type: String, required: false },
+        shiftEnd: { type: String, required: false },
+      },
+      Saturday: {
+        shiftStart: { type: String, required: false },
+        shiftEnd: { type: String, required: false },
+      },
+      Sunday: {
+        shiftStart: { type: String, required: false },
+        shiftEnd: { type: String, required: false },
+      },
     },
-    shiftStart: { type: String, required: true }, // e.g. '08:00'
-    shiftEnd: { type: String, required: true }, // e.g. '17:00'
   },
   { timestamps: true }
 );
