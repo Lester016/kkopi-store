@@ -99,33 +99,62 @@ const updateSchedule = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    if (!Array.isArray(schedule)) {
-      return res.status(400).json({ error: 'Invalid payload' });
+    if (typeof schedule !== 'object' || Array.isArray(schedule) || !schedule) {
+      return res.status(400).json({ error: 'Invalid schedule format' });
     }
 
-    // Delete existing schedule entries for the employee
-    await Schedule.deleteMany({ userId: employeeId });
+    // Validate keys and structure
+    const validDays = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
 
-    // Create new schedule entries
-    const newEntries = schedule.map((entry) => ({
-      userId: employeeId,
-      dayOfWeek: entry.day_of_week,
-      shiftStart: entry.start_time,
-      shiftEnd: entry.end_time,
-    }));
+    const weeklySchedule: Record<
+      string,
+      { shiftStart?: string; shiftEnd?: string }
+    > = {};
 
-    const inserted = await Schedule.insertMany(newEntries);
+    for (const day of validDays) {
+      if (schedule[day]) {
+        const { start_time, end_time } = schedule[day];
+
+        if (typeof start_time !== 'string' || typeof end_time !== 'string') {
+          return res
+            .status(400)
+            .json({ error: `Invalid time format for ${day}` });
+        }
+
+        weeklySchedule[day] = {
+          shiftStart: start_time,
+          shiftEnd: end_time,
+        };
+      } else {
+        // If day is missing, treat as off-day
+        weeklySchedule[day] = {};
+      }
+    }
+
+    const updated = await Schedule.findOneAndUpdate(
+      { userId: employeeId },
+      { userId: employeeId, weeklySchedule },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 
     return res.status(200).json({
       status: 'success',
-      message: 'Schedule set successfully',
+      message: 'Schedule updated successfully',
       data: {
         userId: employeeId,
-        schedule: inserted,
+        schedule: updated.weeklySchedule,
       },
     });
   } catch (err) {
-    console.error('Error setting schedule:', err);
+    console.error('Error updating schedule:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
