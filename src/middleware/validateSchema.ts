@@ -33,31 +33,39 @@ export const UpdateUserSchema = Joi.object<User>({
   lastName: Joi.string(),
 }).min(1);
 
+const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
 export const UpdateScheduleSchema = Joi.object({
-  schedule: Joi.array()
-    .items(
-      Joi.object({
-        day_of_week: Joi.string()
-          .valid(
-            'Sunday',
-            'Monday',
-            'Tuesday',
-            'Wednesday',
-            'Thursday',
-            'Friday',
-            'Saturday'
-          )
-          .required(),
-
-        start_time: Joi.string()
-          .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/) // 'HH:mm'
-          .required(),
-
-        end_time: Joi.string()
-          .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)
-          .required(),
-      })
-    )
-    .min(1)
-    .required(),
+  schedule: Joi.object({
+    Monday: Joi.object({
+      start_time: Joi.string().pattern(timePattern),
+      end_time: Joi.string().pattern(timePattern),
+    }),
+    Tuesday: Joi.object({
+      start_time: Joi.string().pattern(timePattern),
+      end_time: Joi.string().pattern(timePattern),
+    }),
+    Wednesday: Joi.object({
+      start_time: Joi.string().pattern(timePattern),
+      end_time: Joi.string().pattern(timePattern),
+    }),
+    Thursday: Joi.object({
+      start_time: Joi.string().pattern(timePattern),
+      end_time: Joi.string().pattern(timePattern),
+    }),
+    Friday: Joi.object({
+      start_time: Joi.string().pattern(timePattern),
+      end_time: Joi.string().pattern(timePattern),
+    }),
+    Saturday: Joi.object({
+      start_time: Joi.string().pattern(timePattern),
+      end_time: Joi.string().pattern(timePattern),
+    }),
+    Sunday: Joi.object({
+      start_time: Joi.string().pattern(timePattern),
+      end_time: Joi.string().pattern(timePattern),
+    }),
+  })
+    .required()
+    .min(1),
 });
