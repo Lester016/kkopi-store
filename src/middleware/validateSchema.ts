@@ -6,10 +6,32 @@ import User from '../models/UserModel';
 export const validateSchema = (schema: ObjectSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await schema.validateAsync(req.body, { abortEarly: false });
+      await schema.validateAsync(req.body, { abortEarly: true });
       next();
     } catch (error: any) {
-      res.status(422).send(error.details);
+      const firstError = error.details?.[0];
+
+      const cleanedField = firstError.path.join('.');
+      const rawMessage = firstError.message;
+
+      // Remove leading/trailing quotes from field name in message
+      const cleanedMessage = rawMessage.replace(
+        /^"(.+)" is/,
+        (_: string, field: string) => {
+          // Optional: transform field name to human readable (PascalCase, etc.)
+          const friendlyField: string = field
+            .split('.')
+            .slice(-2)
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+          return `${friendlyField} is`;
+        }
+      );
+
+      return res.status(422).json({
+        field: cleanedField,
+        message: cleanedMessage,
+      });
     }
   };
 };
