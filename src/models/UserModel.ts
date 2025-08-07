@@ -1,7 +1,7 @@
-import bcrypt from "bcrypt";
-import { model, Schema } from "mongoose";
-import { nanoid } from "nanoid";
-import Role from "../enum/Role";
+import bcrypt from 'bcrypt';
+import { model, Schema } from 'mongoose';
+import { nanoid } from 'nanoid';
+import Role from '../enum/Role';
 
 // 1. Create an interface representing a document in MongoDB.
 interface User {
@@ -68,8 +68,8 @@ userSchema.methods.matchPassword = async function (enteredPassword: string) {
 };
 
 // Middleware pre will execute before save.
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) {
     next();
   }
 
@@ -79,6 +79,6 @@ userSchema.pre("save", async function (next) {
 });
 
 // 3. Create a Model.
-const User = model<User>("User", userSchema);
+const User = model<User>('User', userSchema);
 
 export default User;

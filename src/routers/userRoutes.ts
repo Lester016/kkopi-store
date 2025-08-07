@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import {
+  addEmployeeDetails,
   deleteUser,
   getAllUsers,
   getUser,
@@ -9,6 +10,7 @@ import {
 } from '../controllers/userController';
 import { protect } from '../middleware/authMiddleware';
 import {
+  AddEmployeeDetailsSchema,
   UpdateScheduleSchema,
   UpdateUserSchema,
   validateSchema,
@@ -23,5 +25,8 @@ router.route('/:id').delete(protect, deleteUser);
 router
   .route('/:id/schedule')
   .put(protect, validateSchema(UpdateScheduleSchema), updateSchedule);
+router
+  .route('/:id/create-employee')
+  .post(protect, validateSchema(AddEmployeeDetailsSchema), addEmployeeDetails);
 
 export default router;
