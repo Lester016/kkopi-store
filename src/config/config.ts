@@ -17,6 +17,6 @@ export const config = {
   dbUri: MONGO_URI,
   accessTokenPrivateKey: ACCESS_TOKEN_SECRET,
   refreshTokenPrivateKey: REFRESH_TOKEN_SECRET,
-  accessTokenExpire: '3m',
+  accessTokenExpire: '15m',
   refreshTokenExpire: '15d',
 };
