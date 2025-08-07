@@ -51,9 +51,15 @@ const registerUser = async (req: Request, res: Response) => {
   // sendEmailVerification(user.id, verificationLink);
 
   // status response 201 means something is created.
-  res
-    .status(201)
-    .send({ message: `User ${user.firstName} is successfully created` });
+  res.status(201).send({
+    message: `User ${user.firstName} is successfully created`,
+    user: {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    },
+  });
 };
 
 const verifyUser: RequestHandler = async (req, res) => {
