@@ -1,5 +1,7 @@
-import { Request, Response } from 'express';
+import { Request, RequestHandler, Response } from 'express';
 import mongoose from 'mongoose';
+import CounterModel from '../models/CounterModel';
+import EmployeeDetailsModel from '../models/EmployeeDetailsModel';
 import Schedule from '../models/ScheduleModel';
 import User from '../models/UserModel';
 
@@ -159,8 +161,67 @@ const updateSchedule = async (req: Request, res: Response) => {
   }
 };
 
+// Get next sequence value
+async function getNextEmployeeId() {
+  const result = await CounterModel.findByIdAndUpdate(
+    { _id: 'employee_id' },
+    { $inc: { sequence_value: 1 } },
+    { new: true, upsert: true }
+  );
+  return result.sequence_value.toString().padStart(6, '0');
+}
+
+const addEmployeeDetails: RequestHandler = async (req, res) => {
+  const { position, branch, startDate, phone } = req.body;
+
+  try {
+    const { id } = req.params;
+    if (!id || !mongoose.isValidObjectId(id)) {
+      return res.status(400).send({ error: 'Invalid user ID' });
+    }
+
+    const [existingDetails, user] = await Promise.all([
+      EmployeeDetailsModel.findOne({ user: id }),
+      User.findById(id),
+    ]);
+
+    if (existingDetails) {
+      return res.status(400).send({ error: 'Employee details already exist' });
+    }
+
+    if (!user) {
+      return res.status(404).send({ error: 'User not found' });
+    }
+
+    const employeeId = await getNextEmployeeId();
+    const employeeDetails = await EmployeeDetailsModel.create({
+      user: id,
+      employeeId,
+      position,
+      branch,
+      startDate,
+      phone,
+    });
+
+    res.status(201).send({
+      message: 'Employee details added successfully',
+      employeeDetails,
+    });
+  } catch (error) {
+    console.error('Error adding employee details:', error);
+    res.status(500).send({ error: 'Error adding employee details' });
+  }
+};
+
 // const verifyEmail = async (req: Request, res: Response) => {
 //   res.send({ message: `Email sent to , please verify.` });
 // };
 
-export { deleteUser, getAllUsers, getUser, updateSchedule, updateUser };
+export {
+  addEmployeeDetails,
+  deleteUser,
+  getAllUsers,
+  getUser,
+  updateSchedule,
+  updateUser,
+};
