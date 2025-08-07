@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import Joi, { ObjectSchema } from 'joi';
 
+import mongoose from 'mongoose';
 import User from '../models/UserModel';
 
 export const validateSchema = (schema: ObjectSchema) => {
@@ -90,4 +91,13 @@ export const UpdateScheduleSchema = Joi.object({
   })
     .required()
     .min(1),
+});
+
+export const AddEmployeeDetailsSchema = Joi.object({
+  position: Joi.string().optional(),
+  branch: Joi.string().optional(),
+  startDate: Joi.date().optional(),
+  phone: Joi.string()
+    .pattern(/^[0-9+\-\s()]*$/)
+    .optional(),
 });
