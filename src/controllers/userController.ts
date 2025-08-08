@@ -6,11 +6,15 @@ import Schedule from '../models/ScheduleModel';
 import User from '../models/UserModel';
 
 const getAllUsers = async (req: Request, res: Response) => {
-  const users = await User.find(
-    {},
-    'firstName lastName email createdAt updatedAt'
-  );
-  res.send({ users });
+  const usersWithDetails = await User.find(
+    { role: { $ne: 'ADMIN' } }, // filter out ADMIN role
+    'firstName lastName email createdAt updatedAt role'
+  ).populate({
+    path: 'employeeDetails', // matches the ref in EmployeeDetails
+    select: 'employeeId position branch startDate phone', // fields from EmployeeDetails
+  });
+
+  res.send({ employees: usersWithDetails });
 };
 
 const getUser = async (req: Request, res: Response) => {
