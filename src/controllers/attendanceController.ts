@@ -33,25 +33,37 @@ const checkIn = async (req: Request, res: Response) => {
 
 // Mark Attendance (Check-out)
 const checkOut = async (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  if (!userId) {
-    return res.status(400).json({ error: 'User ID is required' });
-  }
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
 
-  const date = new Date().toISOString().split('T')[0];
-  const timeOut = new Date().toISOString();
-  console.log('Check-out request:', { userId, date, timeOut });
+    const date = new Date().toISOString().split('T')[0];
+    const timeOut = new Date().toISOString();
+    console.log('Check-out request:', { userId, date, timeOut });
 
-  const attendance = await Attendance.findOne({ userId, date });
-  if (!attendance) {
-    return res.status(400).json({ error: 'Clock-in required first' });
+    const attendance = await Attendance.findOne({ userId, date });
+    if (!attendance) {
+      return res.status(400).json({ error: 'Clock-in required first' });
+    }
+    if (attendance.timeOut) {
+      return res.status(400).json({ error: 'Already clocked out today' });
+    }
+    attendance.timeOut = timeOut;
+    // Calculate total hours worked
+    if (attendance.timeIn) {
+      const diffTimeInMS =
+        new Date(timeOut).getTime() - new Date(attendance.timeIn).getTime();
+      attendance.totalHours = Math.round(diffTimeInMS / (1000 * 60 * 60)); // Convert milliseconds to hours
+    }
+    attendance.status = EmployeeStatus.Present; // Update status to Present on clock-out
+    await attendance.save();
+    res.json({ message: 'Clock-out successful' });
+  } catch (error) {
+    console.error('Error during clock-out:', error);
+    res.status(500).json({ error: 'Failed to clock out' });
   }
-  if (attendance.timeOut) {
-    return res.status(400).json({ error: 'Already clocked out today' });
-  }
-  attendance.timeOut = timeOut;
-  await attendance.save();
-  res.json({ message: 'Clock-out successful' });
 };
 
 // Get Attendance Records with Filters
