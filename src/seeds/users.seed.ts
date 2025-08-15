@@ -1,11 +1,11 @@
 // seeds/user.seed.ts
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import EmployeeStatus from '../src/enum/EmployeeStatus';
-import Role from '../src/enum/Role';
-import AttendanceModel from '../src/models/AttendanceModel';
-import EmployeeDetailsModel from '../src/models/EmployeeDetailsModel';
-import User from '../src/models/UserModel';
+import EmployeeStatus from '../enum/EmployeeStatus';
+import Role from '../enum/Role';
+import AttendanceModel from '../models/AttendanceModel';
+import EmployeeDetailsModel from '../models/EmployeeDetailsModel';
+import User from '../models/UserModel';
 
 dotenv.config();
 
@@ -142,9 +142,9 @@ const seedUsers = async () => {
           let status = EmployeeStatus.Present;
           if (rand < 0.2) status = EmployeeStatus.Absent;
           else if (rand < 0.3) status = EmployeeStatus.Late;
-
-          let timeIn = null;
-          let timeOut = null;
+          // Inside attendance loop
+          let timeIn: string | null = null;
+          let timeOut: string | null = null;
           let totalHours = 0;
 
           if (
@@ -152,14 +152,44 @@ const seedUsers = async () => {
             status === EmployeeStatus.Late
           ) {
             const inHour = status === EmployeeStatus.Late ? 10 : 9;
-            timeIn = `${String(inHour).padStart(2, '0')}:00`;
-            timeOut = '17:00';
+            const dateObj = new Date(
+              lastMonth.getFullYear(),
+              lastMonth.getMonth(),
+              day
+            );
+
+            // Time In UTC
+            const timeInDate = new Date(
+              Date.UTC(
+                dateObj.getFullYear(),
+                dateObj.getMonth(),
+                dateObj.getDate(),
+                inHour,
+                0,
+                0
+              )
+            );
+            timeIn = timeInDate.toISOString();
+
+            // Time Out UTC
+            const timeOutDate = new Date(
+              Date.UTC(
+                dateObj.getFullYear(),
+                dateObj.getMonth(),
+                dateObj.getDate(),
+                17,
+                0,
+                0
+              )
+            );
+            timeOut = timeOutDate.toISOString();
+
             totalHours = 8;
           }
 
           const attendance = new AttendanceModel({
             userId: user._id,
-            date: dateStr,
+            date: dateStr, // still YYYY-MM-DD for the attendance day
             timeIn,
             timeOut,
             selfieIn: 'https://example.com/selfie-in.jpg',
