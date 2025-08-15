@@ -1,7 +1,6 @@
 // @ts-expect-error no types available
 import exifParser from 'exif-parser';
 import { Request, Response } from 'express';
-import multer from 'multer';
 
 import EmployeeStatus from '../enum/EmployeeStatus';
 import Attendance from '../models/AttendanceModel';
