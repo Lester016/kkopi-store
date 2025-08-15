@@ -103,6 +103,23 @@ const seedUsers = async () => {
       },
     ];
 
+    // Predefined randomuser.me portrait URLs
+    const selfieImages = [
+      'https://randomuser.me/api/portraits/men/1.jpg',
+      'https://randomuser.me/api/portraits/men/2.jpg',
+      'https://randomuser.me/api/portraits/men/3.jpg',
+      'https://randomuser.me/api/portraits/men/4.jpg',
+      'https://randomuser.me/api/portraits/women/5.jpg',
+      'https://randomuser.me/api/portraits/women/6.jpg',
+      'https://randomuser.me/api/portraits/women/7.jpg',
+      'https://randomuser.me/api/portraits/women/8.jpg',
+      'https://randomuser.me/api/portraits/men/9.jpg',
+      'https://randomuser.me/api/portraits/women/10.jpg',
+    ];
+    // Helper to get a random selfie
+    const getRandomSelfie = () =>
+      selfieImages[Math.floor(Math.random() * selfieImages.length)];
+
     const today = new Date();
     const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1); // 1st day of last month
     const daysInLastMonth = new Date(
@@ -192,8 +209,8 @@ const seedUsers = async () => {
             date: dateStr, // still YYYY-MM-DD for the attendance day
             timeIn,
             timeOut,
-            selfieIn: 'https://example.com/selfie-in.jpg',
-            selfieOut: 'https://example.com/selfie-out.jpg',
+            selfieIn: getRandomSelfie(),
+            selfieOut: getRandomSelfie(),
             status,
             totalHours,
           });
