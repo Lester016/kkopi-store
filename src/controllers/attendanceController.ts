@@ -1,7 +1,12 @@
+// @ts-expect-error no types available
+import exifParser from 'exif-parser';
 import { Request, Response } from 'express';
+import multer from 'multer';
 
 import EmployeeStatus from '../enum/EmployeeStatus';
 import Attendance from '../models/AttendanceModel';
+
+// Multer setup for in-memory storage (no persistent disk storage for now)
 
 // Mark Attendance (Check-in)
 const checkIn = async (req: Request, res: Response) => {
@@ -16,7 +21,54 @@ const checkIn = async (req: Request, res: Response) => {
   console.log('Clock-in request:', { userId, date, timeIn });
 
   const existingRecord = await Attendance.findOne({ userId, date });
+  let imageUrl: string | null = null;
+  let imageTakenAt: string | null = null;
 
+  if (req.file) {
+    console.log('Image uploaded:', req.file.originalname);
+
+    // Extract EXIF metadata
+    try {
+      const parser = exifParser.create(req.file.buffer);
+      const result = parser.parse();
+
+      if (result.tags.DateTimeOriginal) {
+        // Convert from EXIF timestamp to ISO string
+        imageTakenAt = new Date(
+          result.tags.DateTimeOriginal * 1000
+        ).toISOString();
+      }
+
+      console.log('Extracted EXIF metadata:', {
+        imageTakenAt,
+        cameraModel: result.tags.Model,
+        make: result.tags.Make,
+      });
+    } catch (metaError) {
+      console.warn('Failed to parse EXIF metadata:', metaError);
+    }
+
+    // --- S3 integration example (commented out) ---
+    /*
+      import AWS from 'aws-sdk';
+      const s3 = new AWS.S3({
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        region: process.env.AWS_REGION,
+      });
+
+      const s3Params = {
+        Bucket: process.env.AWS_S3_BUCKET_NAME!,
+        Key: `attendance/${userId}-${Date.now()}.jpg`,
+        Body: req.file.buffer,
+        ContentType: req.file.mimetype,
+        ACL: 'public-read',
+      };
+
+      const uploadResult = await s3.upload(s3Params).promise();
+      imageUrl = uploadResult.Location;
+      */
+  }
   if (existingRecord) {
     return res.status(400).json({ error: 'Already clocked in today' });
   }
@@ -26,6 +78,7 @@ const checkIn = async (req: Request, res: Response) => {
     date,
     timeIn,
     status: EmployeeStatus.Present,
+    selfieIn: imageTakenAt ? imageTakenAt : null,
   });
 
   res.json({ message: 'Clock-in successful' });
