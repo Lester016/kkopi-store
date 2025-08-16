@@ -6,13 +6,13 @@ import Role from '../enum/Role';
 import AttendanceModel from '../models/AttendanceModel';
 import EmployeeDetailsModel from '../models/EmployeeDetailsModel';
 import User from '../models/UserModel';
+import connectDB from '../utils/connectToDb';
 
 dotenv.config();
 
 const seedUsers = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI as string);
-    console.log('Connected to MongoDB');
+    connectDB();
 
     // Clear collections
     await User.deleteMany({});
