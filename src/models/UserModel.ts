@@ -69,6 +69,13 @@ userSchema.virtual('employeeDetails', {
   justOne: true, // Each user has one employee details
 });
 
+userSchema.virtual('schedule', {
+  ref: 'Schedule',
+  localField: '_id',
+  foreignField: 'userId',
+  justOne: true,
+});
+
 userSchema.set('toObject', { virtuals: true });
 userSchema.set('toJSON', { virtuals: true });
 
