@@ -9,10 +9,12 @@ const getAllUsers = async (req: Request, res: Response) => {
   const usersWithDetails = await User.find(
     { role: { $ne: 'ADMIN' } }, // filter out ADMIN role
     'firstName lastName email createdAt updatedAt role'
-  ).populate({
-    path: 'employeeDetails', // matches the ref in EmployeeDetails
-    select: 'employeeId position branch startDate phone', // fields from EmployeeDetails
-  });
+  )
+    .populate({
+      path: 'employeeDetails', // matches the ref in EmployeeDetails
+      select: 'employeeId position branch startDate phone', // fields from EmployeeDetails
+    })
+    .populate('schedule');
 
   res.send({ employees: usersWithDetails });
 };
