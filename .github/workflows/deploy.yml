@@ -1,0 +1,84 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+      # Package only what's needed for production
+      - name: Archive production artifacts
+        run: |
+          tar -czf release.tar.gz \
+            package.json \
+            package-lock.json \
+            dist/ .next/ build/ public/ || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: release.tar.gz
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-release
+
+      - name: Copy artifact to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "release.tar.gz"
+          target: "/home/ubuntu/kkopi-store/releases"
+
+      - name: Deploy on EC2 with rollback capability
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            DEPLOY_DIR="/home/ubuntu/kkopi-store/releases"
+            TIMESTAMP=$(date +%Y%m%d%H%M%S)
+            RELEASE_DIR="$DEPLOY_DIR/$TIMESTAMP"
+
+            mkdir -p "$RELEASE_DIR"
+            tar -xzf "$DEPLOY_DIR/release.tar.gz" -C "$RELEASE_DIR"
+
+            cd "$RELEASE_DIR"
+            npm ci --omit=dev
+
+            # Update symlink to new release
+            ln -sfn "$RELEASE_DIR" /home/ubuntu/kkopi-store/current
+
+            # Restart PM2 with new release
+            cd /home/ubuntu/kkopi-store/current
+            pm2 restart app || pm2 start npm --name "app" -- run start
+
+            # Keep only last 3 releases
+            cd "$DEPLOY_DIR"
+            ls -1t | tail -n +4 | xargs -r rm -rf
