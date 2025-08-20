@@ -1,6 +1,6 @@
 import mongoose, { model } from 'mongoose';
 
-interface EmployeeDetails {
+export interface EmployeeDetails {
   user: mongoose.Schema.Types.ObjectId;
   employeeId?: string; // Optional, unique identifier for the employee
   position?: string;
