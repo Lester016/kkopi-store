@@ -1,7 +1,9 @@
 import { Request, RequestHandler, Response } from 'express';
 import mongoose from 'mongoose';
 import CounterModel from '../models/CounterModel';
-import EmployeeDetailsModel from '../models/EmployeeDetailsModel';
+import EmployeeDetailsModel, {
+  EmployeeDetails,
+} from '../models/EmployeeDetailsModel';
 import Schedule from '../models/ScheduleModel';
 import User from '../models/UserModel';
 
@@ -49,7 +51,17 @@ const getUser = async (req: Request, res: Response) => {
 const updateUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const updatedData = req.body;
+    const {
+      email,
+      firstName,
+      lastName,
+      password,
+      // employeeDetails
+      position,
+      branch,
+      startDate,
+      phone,
+    } = req.body;
 
     const user = await User.findById(id);
 
@@ -58,20 +70,37 @@ const updateUser = async (req: Request, res: Response) => {
     }
 
     // Check if email is being updated and ensure uniqueness
-    if (updatedData.email && updatedData.email !== user.email) {
+    if (email && email !== user.email) {
       const emailInUse = await User.findOne({
-        email: updatedData.email,
+        email: email,
         _id: { $ne: id },
       }).lean();
       if (emailInUse) {
         return res.status(400).json({ message: 'Email already in use' });
       }
     }
+    let employeeDetails: EmployeeDetails | null = null;
+    if (position || branch || startDate || phone) {
+      const employeeId = await getNextEmployeeId();
+      employeeDetails = await EmployeeDetailsModel.findOneAndUpdate(
+        { user: id },
+        { employeeId, position, branch, startDate, phone },
+        { new: true, upsert: true, runValidators: true }
+      );
+    }
 
-    Object.assign(user, updatedData); // apply updates to user instance
+    Object.assign(user, {
+      email,
+      firstName,
+      lastName,
+      password: password ? password : user.password, // only update password if provided
+    }); // apply updates to user instance
     await user.save(); // save with validation
-
-    res.send({ message: 'User updated successfully', user });
+    user.employeeDetails = employeeDetails; // attach employee details if updated
+    res.send({
+      message: 'User updated successfully',
+      user: user,
+    });
   } catch (error) {
     res.status(500).send({ message: 'Error updating user', error });
   }
