@@ -62,6 +62,16 @@ const userSchema = new Schema<User>(
   }
 );
 
+userSchema.set('toObject', { virtuals: true });
+userSchema.set('toJSON', {
+  transform: (_, ret) => {
+    delete ret.password;
+    delete ret.__v;
+    return ret;
+  },
+  virtuals: true,
+});
+
 userSchema.virtual('employeeDetails', {
   ref: 'EmployeeDetails', // Model name
   localField: '_id', // Field in User
@@ -75,9 +85,6 @@ userSchema.virtual('schedule', {
   foreignField: 'userId',
   justOne: true,
 });
-
-userSchema.set('toObject', { virtuals: true });
-userSchema.set('toJSON', { virtuals: true });
 
 userSchema.methods.matchPassword = async function (enteredPassword: string) {
   let isValid = await bcrypt.compare(enteredPassword, this.password); // We can get items by using this because we called the schema

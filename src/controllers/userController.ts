@@ -79,14 +79,27 @@ const updateUser = async (req: Request, res: Response) => {
         return res.status(400).json({ message: 'Email already in use' });
       }
     }
-    let employeeDetails: EmployeeDetails | null = null;
+
+    let employeeDetails: EmployeeDetails | null =
+      await EmployeeDetailsModel.findOne({ user: id });
+
     if (position || branch || startDate || phone) {
-      const employeeId = await getNextEmployeeId();
-      employeeDetails = await EmployeeDetailsModel.findOneAndUpdate(
-        { user: id },
-        { employeeId, position, branch, startDate, phone },
-        { new: true, upsert: true, runValidators: true }
-      );
+      if (employeeDetails) {
+        // Update existing employee details
+        employeeDetails = await EmployeeDetailsModel.findOneAndUpdate(
+          { user: id },
+          { position, branch, startDate, phone },
+          { new: true, runValidators: true }
+        );
+      } else {
+        // Create new employee details with generated ID
+        const employeeId = await getNextEmployeeId();
+        employeeDetails = await EmployeeDetailsModel.findOneAndUpdate(
+          { user: id },
+          { employeeId, position, branch, startDate, phone },
+          { new: true, upsert: true, runValidators: true }
+        );
+      }
     }
 
     Object.assign(user, {
@@ -97,9 +110,27 @@ const updateUser = async (req: Request, res: Response) => {
     }); // apply updates to user instance
     await user.save(); // save with validation
     user.employeeDetails = employeeDetails; // attach employee details if updated
+
+    // Sanitize response: pick only whitelisted fields
+    const sanitizedUser = {
+      id: user._id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      employeeDetails: employeeDetails
+        ? {
+            employeeId: employeeDetails.employeeId,
+            position: employeeDetails.position,
+            branch: employeeDetails.branch,
+            startDate: employeeDetails.startDate,
+            phone: employeeDetails.phone,
+          }
+        : null,
+    };
+
     res.send({
       message: 'User updated successfully',
-      user: user,
+      user: sanitizedUser,
     });
   } catch (error) {
     res.status(500).send({ message: 'Error updating user', error });
