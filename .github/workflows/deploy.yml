@@ -2,7 +2,7 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ['master']
 
 jobs:
   build:
@@ -50,8 +50,8 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "release.tar.gz"
-          target: "/home/ubuntu/kkopi-store/releases"
+          source: 'release.tar.gz'
+          target: '/home/ubuntu/kkopi-store/deployment/releases'
 
       - name: Deploy on EC2 with rollback capability
         uses: appleboy/ssh-action@v1.0.0
@@ -62,7 +62,7 @@ jobs:
           script: |
             set -e
 
-            DEPLOY_DIR="/home/ubuntu/kkopi-store/releases"
+            DEPLOY_DIR="/home/ubuntu/kkopi-store/deployment/releases"
             TIMESTAMP=$(date +%Y%m%d%H%M%S)
             RELEASE_DIR="$DEPLOY_DIR/$TIMESTAMP"
 
@@ -73,10 +73,11 @@ jobs:
             npm ci --omit=dev
 
             # Update symlink to new release
-            ln -sfn "$RELEASE_DIR" /home/ubuntu/kkopi-store/current
+            ln -sfn "$RELEASE_DIR" /home/ubuntu/kkopi-store/deployment/current
 
             # Restart PM2 with new release
-            cd /home/ubuntu/kkopi-store/current
+            cd /home/ubuntu/kkopi-store/deployment/current
+            pm2 delete app || true
             pm2 restart app || pm2 start npm --name "app" -- run start
 
             # Keep only last 3 releases
