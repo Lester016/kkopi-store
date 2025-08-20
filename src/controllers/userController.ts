@@ -22,10 +22,18 @@ const getAllUsers = async (req: Request, res: Response) => {
 const getUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      console.error('Invalid user ID:', id);
+      return res.status(400).send({ message: 'Invalid user ID' });
+    }
+
     const user = await User.findById(
       id,
       'firstName lastName email createdAt updatedAt'
-    );
+    ).populate({
+      path: 'employeeDetails', // matches the ref in EmployeeDetails
+      select: 'employeeId position branch startDate phone', // fields from EmployeeDetails
+    });
 
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
@@ -33,6 +41,7 @@ const getUser = async (req: Request, res: Response) => {
 
     res.send({ user });
   } catch (error) {
+    console.error('Error retrieving user:', error);
     res.status(500).send({ message: 'Error retrieving user', error });
   }
 };
