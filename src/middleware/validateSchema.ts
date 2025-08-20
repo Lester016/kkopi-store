@@ -53,7 +53,14 @@ export const RegisterSchema = Joi.object<User>({
 export const UpdateUserSchema = Joi.object<User>({
   email: Joi.string().email(),
   firstName: Joi.string().uppercase(),
-  lastName: Joi.string(),
+  lastName: Joi.string().uppercase(),
+  password: Joi.string().optional(),
+  position: Joi.string().optional(),
+  branch: Joi.string().optional(),
+  startDate: Joi.date().optional(),
+  phone: Joi.string()
+    .pattern(/^[0-9+\-\s()]*$/)
+    .optional(),
 }).min(1);
 
 const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
