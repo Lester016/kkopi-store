@@ -140,11 +140,7 @@ const updateUser = async (req: Request, res: Response) => {
 const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const user = await User.findByIdAndUpdate(
-      id,
-      { deletedAt: new Date() },
-      { new: true, runValidators: true }
-    );
+    const user = await User.findById(id);
 
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
@@ -155,6 +151,10 @@ const deleteUser = async (req: Request, res: Response) => {
         .status(400)
         .send({ message: 'User already marked as deleted' });
     }
+
+    // Mark as deleted
+    user.deletedAt = new Date();
+    await user.save();
 
     res.send({ message: 'User deleted successfully', user });
   } catch (error) {
