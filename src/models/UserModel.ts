@@ -65,6 +65,7 @@ const userSchema = new Schema<User>(
 userSchema.set('toObject', { virtuals: true });
 userSchema.set('toJSON', {
   transform: (_, ret) => {
+    delete ret.id; // Duplicate of _id
     delete ret.password;
     delete ret.__v;
     return ret;
