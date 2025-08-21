@@ -75,10 +75,9 @@ jobs:
             # Update symlink to new release
             ln -sfn "$RELEASE_DIR" /home/ubuntu/kkopi-store/deployment/current
 
-            # Restart PM2 with new release
+            # Reload PM2 with zero downtime
             cd /home/ubuntu/kkopi-store/deployment/current
-            pm2 delete app || true
-            pm2 restart app || pm2 start npm --name "app" -- run start
+            pm2 reload ecosystem.config.js --only app || pm2 start ecosystem.config.js --only app
 
             # Keep only last 3 releases
             cd "$DEPLOY_DIR"
