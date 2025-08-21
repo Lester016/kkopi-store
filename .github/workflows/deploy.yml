@@ -66,6 +66,7 @@ jobs:
             TIMESTAMP=$(date +%Y%m%d%H%M%S)
             RELEASE_DIR="$DEPLOY_DIR/$TIMESTAMP"
 
+            # Extract release
             mkdir -p "$RELEASE_DIR"
             tar -xzf "$DEPLOY_DIR/release.tar.gz" -C "$RELEASE_DIR"
 
@@ -76,9 +77,9 @@ jobs:
             ln -sfn "$RELEASE_DIR" /home/ubuntu/kkopi-store/deployment/current
 
             # Reload PM2 with zero downtime
-            cd /home/ubuntu/kkopi-store/deployment/current
-            pm2 reload ecosystem.config.js --only app || pm2 start ecosystem.config.js --only app
+            pm2 reload /home/ubuntu/kkopi-store/deployment/pm2/ecosystem.config.js --only app \
+              || pm2 start /home/ubuntu/kkopi-store/deployment/pm2/ecosystem.config.js --only app
 
-            # Keep only last 3 releases
+            # Keep last 3 releases for rollback
             cd "$DEPLOY_DIR"
             ls -1t | tail -n +4 | xargs -r rm -rf
