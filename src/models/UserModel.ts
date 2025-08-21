@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { model, Schema } from 'mongoose';
 import { nanoid } from 'nanoid';
 import Role from '../enum/Role';
+import { cleanDocument } from '../utils/cleanDocument';
 
 // 1. Create an interface representing a document in MongoDB.
 interface User {
@@ -59,16 +60,26 @@ const userSchema = new Schema<User>(
   },
   {
     timestamps: true,
+    versionKey: false, // Disable __v field
   }
 );
 
 userSchema.set('toObject', { virtuals: true });
 userSchema.set('toJSON', {
   transform: (_, ret) => {
-    delete ret.id; // Duplicate of _id
+    delete ret._id; // Duplicate of generated id from virtuals
     delete ret.password;
     delete ret.__v;
-    return ret;
+
+    const cleaned = cleanDocument(ret, true);
+
+    // Flatten schedule
+    if (cleaned.schedule) {
+      const { weeklySchedule } = cleaned.schedule;
+      cleaned.schedule = weeklySchedule; // flatten for consumer
+    }
+
+    return cleaned;
   },
   virtuals: true,
 });
