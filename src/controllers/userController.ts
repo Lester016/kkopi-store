@@ -9,7 +9,7 @@ import User from '../models/UserModel';
 
 const getAllUsers = async (req: Request, res: Response) => {
   const usersWithDetails = await User.find(
-    { role: { $ne: 'ADMIN' }, deletedAt: { $exists: false } }, // filter out ADMIN role
+    { role: { $ne: 'ADMIN' }, deletedAt: null },
     'firstName lastName email createdAt updatedAt role'
   )
     .populate({
