@@ -29,7 +29,7 @@ const EmployeeDetailsSchema = new mongoose.Schema(
       type: String,
     },
     startDate: {
-      type: Date,
+      type: String,
     },
     phone: {
       type: String,
