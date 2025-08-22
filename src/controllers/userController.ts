@@ -162,6 +162,21 @@ const deleteUser = async (req: Request, res: Response) => {
   }
 };
 
+const getUserSchedule = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).send({ message: 'Invalid user ID' });
+    }
+    const schedule = await Schedule.findOne({ userId: id });
+
+    res.send({ schedule: schedule ? schedule.weeklySchedule : null });
+  } catch (error) {
+    console.error('Error retrieving user schedule:', error);
+    res.status(500).send({ message: 'Error retrieving user schedule', error });
+  }
+};
+
 const updateSchedule = async (req: Request, res: Response) => {
   try {
     const employeeId = req.params.id as string;
@@ -297,6 +312,7 @@ export {
   deleteUser,
   getAllUsers,
   getUser,
+  getUserSchedule,
   updateSchedule,
   updateUser,
 };

@@ -5,6 +5,7 @@ import {
   deleteUser,
   getAllUsers,
   getUser,
+  getUserSchedule,
   updateSchedule,
   updateUser,
 } from '../controllers/userController';
@@ -22,6 +23,7 @@ router.route('/').get(protect, getAllUsers);
 router.route('/:id').get(protect, getUser);
 router.route('/:id').put(protect, validateSchema(UpdateUserSchema), updateUser);
 router.route('/:id').delete(protect, deleteUser);
+router.route('/:id/schedule').get(protect, getUserSchedule);
 router
   .route('/:id/schedule')
   .put(protect, validateSchema(UpdateScheduleSchema), updateSchedule);
