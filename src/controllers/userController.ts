@@ -213,17 +213,17 @@ const updateSchedule = async (req: Request, res: Response) => {
 
     for (const day of validDays) {
       if (schedule[day]) {
-        const { start_time, end_time } = schedule[day];
+        const { shiftStart, shiftEnd } = schedule[day];
 
-        if (typeof start_time !== 'string' || typeof end_time !== 'string') {
+        if (typeof shiftStart !== 'string' || typeof shiftEnd !== 'string') {
           return res
             .status(400)
             .json({ error: `Invalid time format for ${day}` });
         }
 
         weeklySchedule[day] = {
-          shiftStart: start_time,
-          shiftEnd: end_time,
+          shiftStart: shiftStart,
+          shiftEnd: shiftEnd,
         };
       } else {
         // If day is missing, treat as off-day
