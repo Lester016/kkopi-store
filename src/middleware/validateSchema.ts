@@ -68,32 +68,32 @@ const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
 export const UpdateScheduleSchema = Joi.object({
   schedule: Joi.object({
     Monday: Joi.object({
-      start_time: Joi.string().pattern(timePattern),
-      end_time: Joi.string().pattern(timePattern),
+      shiftStart: Joi.string().pattern(timePattern),
+      shiftEnd: Joi.string().pattern(timePattern),
     }),
     Tuesday: Joi.object({
-      start_time: Joi.string().pattern(timePattern),
-      end_time: Joi.string().pattern(timePattern),
+      shiftStart: Joi.string().pattern(timePattern),
+      shiftEnd: Joi.string().pattern(timePattern),
     }),
     Wednesday: Joi.object({
-      start_time: Joi.string().pattern(timePattern),
-      end_time: Joi.string().pattern(timePattern),
+      shiftStart: Joi.string().pattern(timePattern),
+      shiftEnd: Joi.string().pattern(timePattern),
     }),
     Thursday: Joi.object({
-      start_time: Joi.string().pattern(timePattern),
-      end_time: Joi.string().pattern(timePattern),
+      shiftStart: Joi.string().pattern(timePattern),
+      shiftEnd: Joi.string().pattern(timePattern),
     }),
     Friday: Joi.object({
-      start_time: Joi.string().pattern(timePattern),
-      end_time: Joi.string().pattern(timePattern),
+      shiftStart: Joi.string().pattern(timePattern),
+      shiftEnd: Joi.string().pattern(timePattern),
     }),
     Saturday: Joi.object({
-      start_time: Joi.string().pattern(timePattern),
-      end_time: Joi.string().pattern(timePattern),
+      shiftStart: Joi.string().pattern(timePattern),
+      shiftEnd: Joi.string().pattern(timePattern),
     }),
     Sunday: Joi.object({
-      start_time: Joi.string().pattern(timePattern),
-      end_time: Joi.string().pattern(timePattern),
+      shiftStart: Joi.string().pattern(timePattern),
+      shiftEnd: Joi.string().pattern(timePattern),
     }),
   })
     .required()
