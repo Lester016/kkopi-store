@@ -22,7 +22,7 @@ const checkIn = async (req: Request, res: Response) => {
     }
 
     // File upload + validation
-    const { imageUrl } = await handleImageUpload(req.file, userId);
+    const { imagePath } = await handleImageUpload(req.file, userId);
     const timeIn = new Date().toISOString();
     console.log('Check-in request:', { userId, date, timeIn });
 
@@ -31,7 +31,7 @@ const checkIn = async (req: Request, res: Response) => {
       date,
       timeIn: timeIn,
       status: EmployeeStatus.Present,
-      selfieIn: imageUrl,
+      selfieIn: imagePath,
     });
 
     return res.json({ message: 'Clock-in successful' });
@@ -56,13 +56,13 @@ const checkOut = async (req: Request, res: Response) => {
 
     let timeOut = new Date().toISOString();
     console.log('Check-out request:', { userId, date, timeOut });
-    const { imageUrl } = await handleImageUpload(req.file, userId);
+    const { imagePath } = await handleImageUpload(req.file, userId);
 
     const diff =
       new Date(timeOut).getTime() - new Date(attendance.timeIn).getTime();
 
     attendance.totalHours = Math.round(diff / (1000 * 60 * 60));
-    attendance.selfieOut = imageUrl;
+    attendance.selfieOut = imagePath;
     attendance.status = EmployeeStatus.Present;
     attendance.timeOut = timeOut;
 

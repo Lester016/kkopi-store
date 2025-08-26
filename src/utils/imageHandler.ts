@@ -2,7 +2,7 @@ import { PutObjectCommand } from '@aws-sdk/client-s3';
 import s3 from './aws.config';
 
 export interface UploadedImage {
-  imageUrl: string;
+  imagePath: string;
 }
 
 export const handleImageUpload = async (
@@ -31,7 +31,7 @@ export const handleImageUpload = async (
 
   await s3.send(command);
 
-  const imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+  // const imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
-  return { imageUrl };
+  return { imagePath: key };
 };
