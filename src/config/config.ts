@@ -11,6 +11,12 @@ const MONGO_URI =
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || '';
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || '';
 
+// AWS Configs
+const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID || '';
+const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY || '';
+const AWS_REGION = process.env.AWS_REGION || 'ap-southeast-1';
+const AWS_BUCKET_NAME = process.env.AWS_BUCKET_NAME || '';
+
 export const config = {
   port: PORT,
   host: HOST,
@@ -19,4 +25,10 @@ export const config = {
   refreshTokenPrivateKey: REFRESH_TOKEN_SECRET,
   accessTokenExpire: '15m',
   refreshTokenExpire: '15d',
+  aws: {
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    region: AWS_REGION,
+    bucketName: AWS_BUCKET_NAME,
+  },
 };

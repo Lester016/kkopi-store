@@ -1,90 +1,14 @@
-// @ts-expect-error no types available
-import exifParser from 'exif-parser';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Request, Response } from 'express';
 
 import EmployeeStatus from '../enum/EmployeeStatus';
 import Attendance from '../models/AttendanceModel';
-
-// Multer setup for in-memory storage (no persistent disk storage for now)
+import s3 from '../utils/aws.config';
+import { handleImageUpload } from '../utils/imageHandler';
 
 // Mark Attendance (Check-in)
 const checkIn = async (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  if (!userId) {
-    return res.status(400).json({ error: 'User ID is required' });
-  }
-
-  const date = new Date().toISOString().split('T')[0];
-  const timeIn = new Date().toISOString();
-
-  console.log('Clock-in request:', { userId, date, timeIn });
-
-  const existingRecord = await Attendance.findOne({ userId, date });
-  let imageUrl: string | null = null;
-  let imageTakenAt: string | null = null;
-
-  if (req.file) {
-    console.log('Image uploaded:', req.file.originalname);
-
-    // Extract EXIF metadata
-    try {
-      const parser = exifParser.create(req.file.buffer);
-      const result = parser.parse();
-
-      if (result.tags.DateTimeOriginal) {
-        // Convert from EXIF timestamp to ISO string
-        imageTakenAt = new Date(
-          result.tags.DateTimeOriginal * 1000
-        ).toISOString();
-      }
-
-      console.log('Extracted EXIF metadata:', {
-        imageTakenAt,
-        cameraModel: result.tags.Model,
-        make: result.tags.Make,
-      });
-    } catch (metaError) {
-      console.warn('Failed to parse EXIF metadata:', metaError);
-    }
-
-    // --- S3 integration example (commented out) ---
-    /*
-      import AWS from 'aws-sdk';
-      const s3 = new AWS.S3({
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        region: process.env.AWS_REGION,
-      });
-
-      const s3Params = {
-        Bucket: process.env.AWS_S3_BUCKET_NAME!,
-        Key: `attendance/${userId}-${Date.now()}.jpg`,
-        Body: req.file.buffer,
-        ContentType: req.file.mimetype,
-        ACL: 'public-read',
-      };
-
-      const uploadResult = await s3.upload(s3Params).promise();
-      imageUrl = uploadResult.Location;
-      */
-  }
-  if (existingRecord) {
-    return res.status(400).json({ error: 'Already clocked in today' });
-  }
-
-  await Attendance.create({
-    userId,
-    date,
-    timeIn,
-    status: EmployeeStatus.Present,
-    selfieIn: imageTakenAt ? imageTakenAt : null,
-  });
-
-  res.json({ message: 'Clock-in successful' });
-};
-
-// Mark Attendance (Check-out)
-const checkOut = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -92,29 +16,61 @@ const checkOut = async (req: Request, res: Response) => {
     }
 
     const date = new Date().toISOString().split('T')[0];
-    const timeOut = new Date().toISOString();
-    console.log('Check-out request:', { userId, date, timeOut });
+    const existingRecord = await Attendance.findOne({ userId, date });
+    if (existingRecord) {
+      return res.status(400).json({ error: 'Already clocked in today' });
+    }
+
+    // File upload + validation
+    const { imageUrl } = await handleImageUpload(req.file, userId);
+    const timeIn = new Date().toISOString();
+    console.log('Check-in request:', { userId, date, timeIn });
+
+    await Attendance.create({
+      userId,
+      date,
+      timeIn: timeIn,
+      status: EmployeeStatus.Present,
+      selfieIn: imageUrl,
+    });
+
+    return res.json({ message: 'Clock-in successful' });
+  } catch (err: any) {
+    console.error('Clock-in error:', err);
+    return res.status(400).json({ error: err.message || 'Clock-in failed' });
+  }
+};
+// Mark Attendance (Check-out)
+const checkOut = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(400).json({ error: 'User ID is required' });
+
+    const date = new Date().toISOString().split('T')[0];
 
     const attendance = await Attendance.findOne({ userId, date });
-    if (!attendance) {
+    if (!attendance)
       return res.status(400).json({ error: 'Clock-in required first' });
-    }
-    if (attendance.timeOut) {
+    if (attendance.timeOut)
       return res.status(400).json({ error: 'Already clocked out today' });
-    }
+
+    let timeOut = new Date().toISOString();
+    console.log('Check-out request:', { userId, date, timeOut });
+    const { imageUrl } = await handleImageUpload(req.file, userId);
+
+    const diff =
+      new Date(timeOut).getTime() - new Date(attendance.timeIn).getTime();
+
+    attendance.totalHours = Math.round(diff / (1000 * 60 * 60));
+    attendance.selfieOut = imageUrl;
+    attendance.status = EmployeeStatus.Present;
     attendance.timeOut = timeOut;
-    // Calculate total hours worked
-    if (attendance.timeIn) {
-      const diffTimeInMS =
-        new Date(timeOut).getTime() - new Date(attendance.timeIn).getTime();
-      attendance.totalHours = Math.round(diffTimeInMS / (1000 * 60 * 60)); // Convert milliseconds to hours
-    }
-    attendance.status = EmployeeStatus.Present; // Update status to Present on clock-out
+
     await attendance.save();
     res.json({ message: 'Clock-out successful' });
-  } catch (error) {
-    console.error('Error during clock-out:', error);
-    res.status(500).json({ error: 'Failed to clock out' });
+  } catch (err: any) {
+    console.error('Error during clock-out:', err);
+    res.status(500).json({ error: err.message || 'Failed to clock out' });
   }
 };
 
@@ -142,7 +98,36 @@ const getAttendanceRecords = async (req: Request, res: Response) => {
     const attendanceRecords = await Attendance.find(filter)
       .sort({ date: -1 })
       .populate('userId', 'firstName lastName email');
-    res.json({ attendanceRecords });
+
+    const recordsWithUrls = await Promise.all(
+      attendanceRecords.map(async (record: any) => {
+        const obj = record.toObject();
+
+        if (obj.selfieIn) {
+          const command = new GetObjectCommand({
+            Bucket: process.env.AWS_BUCKET_NAME!,
+            Key: obj.selfieIn,
+          });
+          obj.selfieIn = await getSignedUrl(s3, command, {
+            expiresIn: 3600,
+          });
+        }
+
+        if (obj.selfieOut) {
+          const command = new GetObjectCommand({
+            Bucket: process.env.AWS_BUCKET_NAME!,
+            Key: obj.selfieOut,
+          });
+          obj.selfieOut = await getSignedUrl(s3, command, {
+            expiresIn: 3600,
+          });
+        }
+
+        return obj;
+      })
+    );
+
+    res.json({ recordsWithUrls });
   } catch (error) {
     console.error('Error fetching filtered attendance records:', error);
     res.status(500).json({ error: 'Failed to fetch attendance records' });
