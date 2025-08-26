@@ -22,7 +22,7 @@ const checkIn = async (req: Request, res: Response) => {
     }
 
     // File upload + validation
-    const { imageUrl } = await handleImageUpload(req.file, userId);
+    const { imagePath } = await handleImageUpload(req.file, userId);
     const timeIn = new Date().toISOString();
     console.log('Check-in request:', { userId, date, timeIn });
 
@@ -31,7 +31,7 @@ const checkIn = async (req: Request, res: Response) => {
       date,
       timeIn: timeIn,
       status: EmployeeStatus.Present,
-      selfieIn: imageUrl,
+      selfieIn: imagePath,
     });
 
     return res.json({ message: 'Clock-in successful' });
