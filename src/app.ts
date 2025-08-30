@@ -11,7 +11,7 @@ const app: Express = express();
 
 app.use(
   cors({
-    origin: 'http://localhost:5173', // or '*' in development
+    origin: '*', // or '*' in development
     credentials: true,
   })
 );
