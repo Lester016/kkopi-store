@@ -35,6 +35,7 @@ const AttendanceSchema = new Schema<Attendance>(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
 
